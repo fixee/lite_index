@@ -7,6 +7,7 @@
 #include "reflection.hpp"
 #include "query.h"
 #include "field.h"
+#include "array_field.h"
 
 using namespace std;
 
