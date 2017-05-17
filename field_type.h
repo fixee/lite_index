@@ -31,5 +31,11 @@ struct FieldDataType<QDT_BOOL>{
     typedef bool value_type;
 };
 
+class FieldInterface {
+public:
+    virtual bool Init(bool use_index = false) = 0;
+    virtual bool Support(QueryType qt, const QueryData& data) = 0;
+    virtual bool trigger(QueryType qt, const QueryData& data, boost::dynamic_bitset<>& bitset) = 0;
+};
 
 #endif // FIELD_TYPE_H_

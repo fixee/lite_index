@@ -54,8 +54,8 @@ struct Query
 };
 
 template<typename T>
-bool GetQueryDataValue(QueryDataType qt, QueryDataValue qd_value, T& value) {
-    switch (qt) {
+bool GetQueryDataValue(QueryDataType qdt, QueryDataValue qd_value, T& value) {
+    switch (qdt) {
         case QDT_INT32:
             value = qd_value.int32_value;
             return true;

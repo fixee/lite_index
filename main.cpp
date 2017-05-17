@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
 
     CommField<QDT_INT32> field;
     field.set_size(1024);
-    field.Init();
+    field.Init(true);
 
     for (int i = 0; i < 1024; ++i) {
         field.set_value(i, i);
@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
     end.int32_value = 12;
     query_data.values.push_back(end);
 
-    QueryType query_type = QT_AND;
+    QueryType query_type = QT_NOT_IN;
 
     bool support = field.Support(query_type, query_data);
     cout << "support:" << support << endl;
