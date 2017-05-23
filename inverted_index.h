@@ -7,10 +7,10 @@
 #include "query.h"
 #include "field_type.h"
 
-template<QueryDataType QDT>
+template<class T>
 class InvertedIndex {
 public:
-    typedef typename FieldDataType<QDT>::value_type value_type;
+    typedef T value_type;
     typedef std::vector<int> inverted_list_t;
 
     void clear() { index_.clear(); }
@@ -21,7 +21,7 @@ public:
 
     // inverted_index 支持的查询类型有 EQUAL, NOT_EQUAL, IN, NOT_IN
     bool Support(QueryType qt, const QueryData& data) {
-        if (data.type != QDT || 
+        if (data.type != SupportQueryDataType<T>::value || 
             data.values.empty() ||
             (qt != QT_EQUAL && qt != QT_NOT_EQUAL && qt != QT_IN && qt != QT_NOT_IN)) {
             return false;
@@ -36,11 +36,11 @@ public:
         std::vector<value_type> query_values;
         value_type value;
         if (qt == QT_EQUAL || qt == QT_NOT_EQUAL) {
-            GetQueryDataValue<value_type>(QDT, data.values[0], value);
+            GetQueryDataValue<value_type>(data.type, data.values[0], value);
             query_values.push_back(value);
         } else if (qt == QT_IN || qt == QT_NOT_IN) {
             for (int i = 0; i < data.values.size(); ++i) {
-                GetQueryDataValue<value_type>(QDT, data.values[i], value);
+                GetQueryDataValue<value_type>(data.type, data.values[i], value);
                 query_values.push_back(value);
             }
         }

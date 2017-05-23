@@ -10,66 +10,65 @@
 #include "inverted_index.h"
 #include "filter.h"
 
-template<QueryDataType QDT>
+template<class T>
 class CommField : public FieldInterface {
 public:
-    typedef typename FieldDataType<QDT>::value_type value_type;
+    // 用于存储的数据类型
+    typedef T value_type;
+    // 用于建立索引的数据类型
+    typedef typename FieldPreProcessor<T>::value_type index_value_type;
 
     CommField() : size_(0), index_(NULL) {}
-
     ~CommField() {
-        for (FieldFilter<QDT>* p : filters_) {
+        for (FieldFilter<index_value_type>* p : filters_) {
             if (NULL != p) delete p;
         }
-
         if (NULL != index_) delete index_;
     }
 
     void set_size(int size) { size_ = size; values_.resize(size_); }
 
-    template<typename T, typename std::enable_if<std::is_same<T,int>::value, T>::type = 0>
-    bool get_value(T pos, value_type& value) {
+    template<typename V, typename std::enable_if<std::is_same<V,int>::value, V>::type = 0>
+    bool get_value(V pos, value_type& value) {
         assert(pos <= size_);
         value = values_[pos];
         return true;
     }
 
-    template<typename T, typename std::enable_if<std::is_same<T,int>::value, T>::type = 0>
-    bool set_value(T pos, value_type& value) {
-        // 使用 if 进行判断 或者 assert 进行判断？？？
-        // assert 起作用的地方是在运行时 ??? 
+    template<typename V, typename std::enable_if<std::is_same<V,int>::value, V>::type = 0>
+    bool set_value(V pos, value_type& value) {
         assert(pos <= size_);
         values_[pos] = value;
 
         if (NULL != index_) {
-            index_->set_value(pos, value);
+            index_->set_value(pos, processor_.GetValue(value));
         }
         return true;
     }
 
-
     bool Init(bool use_index = false) {
         filters_.resize(QT_MAX, NULL);
-        Factory<QueryType, FieldFilter<QDT>>& inst = Factory<QueryType, FieldFilter<QDT>>::instance();
+        Factory<QueryType, FieldFilter<index_value_type>>& inst =   \
+            Factory<QueryType, FieldFilter<index_value_type>>::instance();
         for (int i = 0; i < QT_MAX; ++i) {
             filters_[i] = inst.create_object(static_cast<QueryType>(i));
         }
 
         if (use_index) {
-            index_ = new InvertedIndex<QDT>(); 
+            index_ = new InvertedIndex<T>(); 
         }
     }
 
-    virtual bool Support(QueryType qt, const QueryData& data) {
-        if (data.type != QDT) return false;
+    virtual int Support(QueryType qt, const QueryData& data) {
+        if (data.type != SupportQueryDataType<T>::value) return 0;
 
         if (NULL != index_ && index_->Support(qt,data)) 
-            return true;
+            return 2;
 
-        if (NULL != filters_[qt] && filters_[qt]->Rebuild(data.values))
-            return true;
+        if (NULL != filters_[qt] && filters_[qt]->Rebuild(data.type, data.values))
+            return 1;
 
-        return false;
+        return 0;
     }
 
     virtual bool trigger(QueryType qt, const QueryData& data, boost::dynamic_bitset<>& bitset) {
@@ -79,10 +78,10 @@ public:
         }
 
         // 使用filter 触发
-        FieldFilter<QDT>* p_filter = filters_[qt];
-        if (p_filter != NULL && p_filter->Rebuild(data.values)) {
+        FieldFilter<index_value_type>* p_filter = filters_[qt];
+        if (p_filter != NULL && p_filter->Rebuild(data.type, data.values)) {
             for (int i = 0; i < bitset.size(); ++i) {
-                if (p_filter->filter(this->values_[i])) {
+                if (p_filter->filter(processor_.GetValue(this->values_[i]))) {
                     bitset.set(i);
                 }
             }
@@ -95,8 +94,10 @@ public:
 private:
     int size_;
     std::vector<value_type> values_;
-    InvertedIndex<QDT>* index_;
-    std::vector<FieldFilter<QDT>*> filters_;
+    InvertedIndex<index_value_type>* index_;
+    std::vector<FieldFilter<index_value_type>*> filters_;
+
+    FieldPreProcessor<T> processor_;
 };
 
 #endif // FIELD_H_

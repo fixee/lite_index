@@ -13,7 +13,7 @@ using namespace std;
 
 int main(int argc, char** argv) {
 
-    CommField<QDT_INT32> field;
+    CommField<int32_t> field;
     field.set_size(1024);
     field.Init(true);
 

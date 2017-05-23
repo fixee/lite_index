@@ -4,7 +4,12 @@
 #include <string>
 #include <vector>
 
-typedef std::string string_t;
+typedef struct c_str_t {
+    char *data;
+    size_t size;
+} c_str_t;
+
+typedef c_str_t string_t;
 
 enum QueryDataType {
     QDT_INT32     = 0 ,
@@ -12,6 +17,7 @@ enum QueryDataType {
     QDT_FLOAT     ,
     QDT_DOUBLE    ,
     QDT_BOOL      ,
+    QDT_STRING    ,
 
     QDT_MAX
 }; 
@@ -22,6 +28,7 @@ union QueryDataValue {
     float        float_value;
     double       double_value;
     bool         bool_value;
+    c_str_t      string_value;
 };
 
 struct QueryData {
@@ -41,7 +48,7 @@ enum QueryType {
 };
 
 struct QueryItem {
-    string_t     name;
+    std::string   name;
     QueryType     type;
     QueryData     data;
 };
