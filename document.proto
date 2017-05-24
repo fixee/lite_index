@@ -1,0 +1,87 @@
+syntax = "proto2";
+
+package index_system.pb;
+
+option optimize_for=LITE_RUNTIME; 
+
+message StringFeature {
+    optional string name = 1;
+    optional double value = 2;
+}
+
+message StringFeatures {
+    repeated StringFeature features = 1;    
+}
+
+message Feature {
+    optional uint64 name = 1;
+    optional double value = 2;
+}
+
+message Features {
+    repeated Feature features = 1;    
+}
+
+message Field {
+    optional string name = 1;
+    optional string value = 2;
+}
+
+message FeedDoc{
+    required string doc_id = 1;
+    required int64 feed_time = 2;
+    required bool isdel = 3 [default = false]; 
+    repeated StringFeature categories = 4;
+    repeated StringFeature keywords = 5;
+    repeated StringFeature topics = 6;
+    repeated StringFeature ventities = 7;
+    repeated Field fields = 8;
+    repeated StringFeature title_entities = 9;
+    repeated StringFeatures multi_categories = 10;
+    repeated StringFeature real_title_entities = 11;
+    repeated StringFeature ve_re_te_intersection = 12;
+    repeated StringFeature video_tags = 13;
+    repeated StringFeatures multi_topics = 14;
+}
+
+message Document {
+    repeated Feature keywords = 1;
+    repeated Feature categories = 2; 
+    optional Feature attributes = 3;
+    repeated Field fields = 4;
+    required bool isdel = 5 [default = false];
+    required string id = 6;
+    required double feedback_gmp = 7;
+    required int64 publish_time = 8;
+    required string ncid = 9;
+    optional int64 update_time = 10 [default = 0];
+    repeated string product_id = 11;
+    optional int32 update_type = 12 [default = 0]; 
+    optional int32 expire_age_hour = 13 [default = 0]; 
+    optional int32 build_count = 14 [default = 0]; 
+    repeated double multi_gmp = 15; 
+    optional int64 expire_time = 16 [default = 0];
+    optional int64 feed_version = 17;
+    repeated Feature topics = 18; 
+    optional bool build_inc = 19;
+    optional int64 gmp_update = 20;
+    repeated Feature ventities = 21;
+    repeated uint64 lr_fea_hashes = 22;
+    repeated Feature title_entities = 23;
+    optional double quality = 24;
+    optional double newsy_score = 25;
+    repeated Field response_fields = 26;
+    optional uint64 publisher_hash = 27;
+    optional uint64 groupid_hash = 28;
+    optional uint32 cp_expire_type = 29;
+    repeated Features multi_categories = 30;
+    optional uint64 media_level =31;
+    repeated Feature real_title_entities = 32;
+    repeated Feature ve_re_te_intersection = 33;
+    repeated Features multi_topics = 34;
+}
+
+message Documents {
+    repeated Document documents = 1;
+}
+

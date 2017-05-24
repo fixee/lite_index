@@ -1,7 +1,7 @@
 
 TARGET=exe
 OBJS := $(patsubst %.cpp,%.o,$(wildcard *.cpp))
-OBJS += $(patsubst %.cpp,%.o,$(wildcard *.cc))
+OBJS += $(patsubst %.cc,%.o,$(wildcard *.cc))
 
 CXX=g++
 CXXFLAGS= -g -O0 -std=c++11
@@ -16,3 +16,9 @@ all: $(OBJS)
 clean:
 	rm *.o
 	rm $(TARGET)
+
+%.o : %.cpp
+	$(CXX) -c $(CXXFLAGS) $< -o $@
+
+%.o : %.cc
+	$(CXX) -c $(CXXFLAGS) $< -o $@
