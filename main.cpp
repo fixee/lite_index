@@ -8,9 +8,10 @@
 #include "reflection.hpp"
 #include "query.h"
 #include "field.h"
-#include "array_field.h"
 #include "document.pb.h"
+#include "array_field.h"
 #include "field_config.h"
+#include "search_index.h"
 
 using namespace std;
 
@@ -52,7 +53,7 @@ int main(int argc, char** argv) {
     //}
     
     // test proto_buffer
-    using namespace index_system::pb;
+    //using namespace index_system::pb;
 
     // read data
     std::ifstream ifs("data/786113550_27", std::ios::in | std::ios::binary);
@@ -60,31 +61,43 @@ int main(int argc, char** argv) {
     data.assign((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     std::cout << data.size() << std::endl;
 
-    Documents docs;
+    index_system::pb::Documents docs;
     bool ret = docs.ParseFromString(data);
     std::cout << "parse ret:" << ret << std::endl;
     std::cout << "document size:" << docs.documents_size() << std::endl;
 
-    //typedef typename GetterFactory<int64_t>::GetterFunc int64_getter;
-    typedef GetterFactory<int64_t>::GetterFunc int64_getter;
-    typedef GetterFactory<std::string>::GetterFunc string_getter;
+    ////typedef typename GetterFactory<int64_t>::GetterFunc int64_getter;
+    //typedef GetterFactory<int64_t>::GetterFunc int64_getter;
+    //typedef GetterFactory<std::string>::GetterFunc string_getter;
 
-    int64_getter publish_time_getter;
-    if (!GetterFactory<int64_t>::Instance().get("get_publish_time", publish_time_getter)) {
-        std::cout << "field getter error: get_publish_time" << std::endl;
+    //int64_getter publish_time_getter;
+    //if (!GetterFactory<int64_t>::Instance().get("get_publish_time", publish_time_getter)) {
+    //    std::cout << "field getter error: get_publish_time" << std::endl;
+    //    return 1;
+    //}
+
+    //string_getter doc_id_getter;
+    //if (!GetterFactory<std::string>::Instance().get("get_doc_id", doc_id_getter)) {
+    //    std::cout << "field getter error: get_doc_id" << std::endl;
+    //    return 1;
+    //}
+
+    //for (int i = 0; i < docs.documents_size(); ++i) {
+    //    const index_system::pb::Document& doc = docs.documents(i);
+    //    std::cout << "doc_id:" << doc_id_getter(doc) << "    ";
+    //    std::cout << "publish_time:" << publish_time_getter(doc) << std::endl;
+    //}
+
+    SearchIndex engine;
+    ret = engine.Init();
+    if (!ret) {
+        std::cout << "init search index error" << endl;
         return 1;
     }
 
-    string_getter doc_id_getter;
-    if (!GetterFactory<std::string>::Instance().get("get_doc_id", doc_id_getter)) {
-        std::cout << "field getter error: get_doc_id" << std::endl;
-        return 1;
-    }
-
+    engine.Reset(docs.documents_size());
     for (int i = 0; i < docs.documents_size(); ++i) {
-        const index_system::pb::Document& doc = docs.documents(i);
-        std::cout << "doc_id:" << doc_id_getter(doc) << "    ";
-        std::cout << "publish_time:" << publish_time_getter(doc) << std::endl;
+        engine.InsertDocument(docs.documents(i));
     }
 
     return 0;

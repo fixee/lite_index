@@ -2,8 +2,10 @@
 #define FIELD_TYPE_H_
 
 #include <string>
+#include <boost/dynamic_bitset.hpp>
 
 #include "query.h"
+#include "document.pb.h"
 
 // BEGIN 定义一些特殊的字段类型
 // 支持普通的类型有: int32_t, int64_t, float, double, bool
@@ -91,7 +93,13 @@ public:
      */
     virtual int Support(QueryType qt, const QueryData& data) = 0;
 
-    virtual bool trigger(QueryType qt, const QueryData& data, boost::dynamic_bitset<>& bitset) = 0;
+    virtual bool Trigger(QueryType qt, const QueryData& data, boost::dynamic_bitset<>& bitset) = 0;
+
+    virtual bool SetDocument(int pos, const index_system::pb::Document& doc) = 0;
+
+    virtual void set_size(size_t size) = 0;
+
+    virtual void clear() = 0;
 };
 
 #endif // FIELD_TYPE_H_

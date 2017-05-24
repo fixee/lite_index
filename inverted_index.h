@@ -16,7 +16,7 @@ public:
     void clear() { index_.clear(); }
 
     void set_value(int pos, value_type& value) {
-        index_[pos].push_back(value);
+        index_[value].push_back(pos);
     }
 
     // inverted_index 支持的查询类型有 EQUAL, NOT_EQUAL, IN, NOT_IN
@@ -30,7 +30,7 @@ public:
         return true;
     }
 
-    bool trigger(QueryType qt, const QueryData& data, boost::dynamic_bitset<>& bitset) {
+    bool Trigger(QueryType qt, const QueryData& data, boost::dynamic_bitset<>& bitset) {
         if (!Support(qt, data)) return false;
 
         std::vector<value_type> query_values;
@@ -45,8 +45,7 @@ public:
             }
         }
 
-        // 处理 OR 请求
-        for (value_type& val : query_values) {
+        for (const value_type& val : query_values) {
             auto it = index_.find(val);
             if (it != index_.end()) {
                 for(int pos : it->second) {
