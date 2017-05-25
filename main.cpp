@@ -100,5 +100,7 @@ int main(int argc, char** argv) {
         engine.InsertDocument(docs.documents(i));
     }
 
+    sleep(100);
+
     return 0;
 }

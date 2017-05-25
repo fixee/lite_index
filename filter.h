@@ -4,7 +4,6 @@
 #include <unordered_set>
 
 #include "query.h"
-#include "field_type.h"
 #include "reflection.hpp"
 
 template<class T>
@@ -14,7 +13,7 @@ public:
     virtual ~FieldFilter() {}
 
     virtual bool Rebuild(QueryDataType qdt, const std::vector<QueryDataValue>& data) = 0;
-    virtual bool filter(value_type& value) = 0;
+    virtual bool filter(const value_type& value) = 0;
 };
 
 template<class T>
@@ -32,7 +31,7 @@ public:
         return true;
     }
 
-    virtual bool filter(value_type& value) {
+    virtual bool filter(const value_type& value) {
         return (value > begin_ && value < end_);
     }
 
@@ -54,7 +53,7 @@ public:
         return true;
     }
 
-    virtual bool filter(value_type& value) = 0;
+    virtual bool filter(const value_type& value) = 0;
 
 protected:
     value_type value_;
@@ -78,7 +77,7 @@ public:
         return true;
     }
 
-    virtual bool filter(value_type& value) = 0;
+    virtual bool filter(const value_type& value) = 0;
 
 protected:
     std::unordered_set<value_type> set_value_;
@@ -88,7 +87,7 @@ template<class T>
 class EqualFilter : public NormalFilter<T> {
 public:
     typedef T value_type;
-    virtual bool filter(value_type& value) {
+    virtual bool filter(const value_type& value) {
         return value == this->value_;
     }
 };
@@ -97,7 +96,7 @@ template<class T>
 class NotEqualFilter : public NormalFilter<T> {
 public:
     typedef T value_type;
-    virtual bool filter(value_type& value) {
+    virtual bool filter(const value_type& value) {
         return value != this->value_;
     }
 };
@@ -106,7 +105,7 @@ template<class T>
 class AndFilter : public NormalFilter<T> {
 public:
     typedef T value_type;
-    virtual bool filter(value_type& value) {
+    virtual bool filter(const value_type& value) {
         return value & this->value_;
     }
 };
@@ -116,7 +115,7 @@ template<class T>
 class InFilter : public SetFilter<T> {
 public:
     typedef T value_type;
-    virtual bool filter(value_type& value) {
+    virtual bool filter(const value_type& value) {
         return this->set_value_.find(value) != this->set_value_.end();
     }
 };
@@ -125,7 +124,7 @@ template<class T>
 class NotInFilter : public SetFilter<T> {
 public:
     typedef T value_type;
-    virtual bool filter(value_type& value) {
+    virtual bool filter(const value_type& value) {
         return this->set_value_.find(value) == this->set_value_.end();
     }
 };

@@ -8,9 +8,9 @@
 #include "document.pb.h"
 
 // BEGIN 定义一些特殊的字段类型
-// 支持普通的类型有: int32_t, int64_t, float, double, bool
+// 支持普通的类型有: int32_t, uint32_t, int64_t, uint64_t, float, double, bool
 typedef struct feature_t {
-    std::string name;
+    uint64_t    name;
     double      score;
 } feature_t;
 // END 定义一些特殊的字段类型
@@ -20,7 +20,7 @@ template<class T>
 class FieldPreProcessor {
 public:
     typedef T value_type;
-    value_type& GetValue(T& val) {
+    const value_type& operator()(const T& val) {
         return val;
     }
 };
@@ -28,8 +28,8 @@ public:
 template<>
 class FieldPreProcessor<feature_t> {
 public:
-    typedef std::string value_type;
-    value_type& GetValue(feature_t& val) {
+    typedef uint64_t value_type;
+    const value_type& operator()(const feature_t& val) {
         return val.name;
     }
 };
@@ -46,9 +46,21 @@ public:
 };
 
 template<>
+class SupportQueryDataType<uint32_t> {
+public:
+    static const QueryDataType value = QDT_UINT32;
+};
+
+template<>
 class SupportQueryDataType<int64_t> {
 public:
     static const QueryDataType value = QDT_INT64;
+};
+
+template<>
+class SupportQueryDataType<uint64_t> {
+public:
+    static const QueryDataType value = QDT_UINT64;
 };
 
 template<>
@@ -78,7 +90,7 @@ public:
 template<>
 class SupportQueryDataType<feature_t> {
 public:
-    static const QueryDataType value = QDT_STRING;
+    static const QueryDataType value = QDT_UINT64;
 };
 // END 定义各种类型支持的查询数据类型
 

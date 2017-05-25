@@ -15,7 +15,7 @@ public:
 
     void clear() { index_.clear(); }
 
-    void set_value(int pos, value_type& value) {
+    void set_value(int pos, const value_type& value) {
         index_[value].push_back(pos);
     }
 

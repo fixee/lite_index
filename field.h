@@ -39,21 +39,21 @@ public:
     }
 
     template<typename V, typename std::enable_if<std::is_same<V,int>::value, V>::type = 0>
-    bool set_value(V pos, value_type& value) {
+    bool set_value(V pos, const value_type& value) {
         values_[pos] = value;
 
         if (NULL != index_) {
-            index_->set_value(pos, processor_.GetValue(value));
+            index_->set_value(pos, processor_(value));
         }
         return true;
     }
 
     template<typename V, typename std::enable_if<std::is_same<V,int>::value, V>::type = 0>
-    bool set_value(V pos, value_type&& value) {
+    bool set_value(V pos, const value_type&& value) {
         values_[pos] = value;
 
         if (NULL != index_) {
-            index_->set_value(pos, processor_.GetValue(value));
+            index_->set_value(pos, processor_(value));
         }
         return true;
     }
@@ -105,11 +105,11 @@ public:
         if (p_filter == NULL || !p_filter->Rebuild(data.type, data.values))
             return false;
 
-        //for (int i = 0; i < values_.size(); ++i) {
-        //    if (p_filter->filter(processor_.GetValue(values_[i]))) {
-        //        bitset.set(i);
-        //    }
-        //}
+        for (int i = 0; i < values_.size(); ++i) {
+            if (p_filter->filter(processor_(values_[i]))) {
+                bitset.set(i);
+            }
+        }
         return true;
     }
 

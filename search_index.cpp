@@ -3,6 +3,7 @@
 #include <boost/dynamic_bitset.hpp>
 
 #include "field.h"
+#include "array_field.h"
 #include "field_config.h"
 
 SearchIndex::SearchIndex() : capacity_(0), doc_size_(0), inited_(false) {
@@ -32,7 +33,21 @@ bool SearchIndex::InitField(int slot, const field_config_t& conf) {
 
 template<class T>
 bool SearchIndex::InitArrField(int slot, const field_config_t& conf) {
-    return false;
+    if (slot >= INDEX_FIELD_SIZE) 
+        return false;
+
+    typename GetterFactory<std::vector<T>>::GetterFunc func;
+    if(!GetterFactory<std::vector<T>>::Instance().get(conf.convert_func, func))
+        return false;
+
+    FieldInterface* p = new ArrayField<T>(func);
+    if (!p->Init(conf.index)) {
+        delete p;
+        return false;
+    } else {
+        fields_[slot] = p;
+        return true;
+    }
 }
 
 bool SearchIndex::Init() {
