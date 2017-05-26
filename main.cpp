@@ -1,3 +1,5 @@
+#include <dirent.h>
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -28,28 +30,54 @@ int main(int argc, char** argv) {
 
     // 大括号限制生命周期， 及时释放内存
     {
-        std::ifstream ifs("data/786113550_27", std::ios::in | std::ios::binary);
-        std::string data;
-        data.assign((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-        std::cout << data.size() << std::endl;
+        DIR *p_dir;
+        struct dirent *p_dirent;
+        std::vector<std::string> file_names;
 
-        index_system::pb::Documents docs;
-        ret = docs.ParseFromString(data);
-        std::cout << "parse ret:" << ret << std::endl;
-        std::cout << "document size:" << docs.documents_size() << std::endl;
+        p_dir = opendir("data");
+        if(NULL != p_dir) {
+            while((p_dirent = readdir(p_dir)) != NULL) {
+                if(strcmp( p_dirent->d_name, ".") == 0) { continue; }
+                if(strcmp( p_dirent->d_name, "..") == 0) { continue; }
 
-        engine.Reset(docs.documents_size());
-        for (int i = 0; i < docs.documents_size(); ++i) {
-            engine.InsertDocument(docs.documents(i));
+                file_names.push_back(std::string("data/").append(p_dirent->d_name));
+            }
+
+            closedir(p_dir);
+        }
+
+        size_t total_doc_size = 0;
+        for (auto &file_name : file_names) {
+            std::string data;
+            std::ifstream ifs(file_name.c_str(), std::ios::in | std::ios::binary);
+            data.assign((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+            index_system::pb::Documents docs;
+            ret = docs.ParseFromString(data);
+            total_doc_size += docs.documents_size();
+        }
+
+        engine.Reset(total_doc_size);
+        std::cout << "total_doc_size:" << total_doc_size << std::endl;
+
+        size_t load_doc_size = 0;
+        for (auto &file_name : file_names) {
+            std::string data;
+            std::ifstream ifs(file_name.c_str(), std::ios::in | std::ios::binary);
+            data.assign((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+            index_system::pb::Documents docs;
+            ret = docs.ParseFromString(data);
+            for (int i = 0; i < docs.documents_size(); ++i) {
+                engine.InsertDocument(docs.documents(i));
+            }
+
+            load_doc_size += docs.documents_size();
+            std::cout << "load file_name:" << file_name << "    ";
+            std::cout << "loaded doc size:" << load_doc_size << std::endl;
         }
     }
-    std::cout << "search_index load succ!" << std::endl;
 
-    //c_str_t str_value;
-    //str_value.data = const_cast<char*>("14");
-    //str_value.size = 2;
-    //QueryDataValue pid;
-    //pid.string_value = str_value;
+    std::cout << "search_index load succ!" << std::endl;
+    sleep(1000000);
 
     std::vector<std::string> pid_list = { "14" };
 
