@@ -7,13 +7,6 @@
 #include <vector>
 #include <type_traits>
 
-typedef struct c_str_t {
-    char *data;
-    size_t size;
-} c_str_t;
-
-typedef c_str_t string_t;
-
 enum QueryDataType {
     QDT_INT32     = 0 ,
     QDT_UINT32    ,
@@ -54,11 +47,16 @@ struct QueryItem {
     QueryData     data;
 };
 
-struct Query
-{
-    std::vector<QueryItem> should;
-    std::vector<QueryItem> must;
-    std::vector<QueryItem> must_not;
+enum BoolOperationType {
+    BOT_AND     = 0,
+    BOT_OR         ,
+    BOT_NOT        
+};
+
+struct Query {
+    BoolOperationType bot;
+    std::vector<QueryItem>  query_items;
+    std::vector<Query>      sub_queries;
 };
 
 typedef uint32_t query_str_size_type;

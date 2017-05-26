@@ -17,6 +17,20 @@
 
 using namespace std;
 
+uint64_t hash_str(const char* p, size_t n) {
+    if (n == 0 || NULL == p) {
+        return 0;
+    }
+
+    uint64_t h = 2654435761u * (*p);
+
+    while (--n) {
+        h = (h * 97) + *++p;
+    }
+
+    return h;
+}
+
 int main(int argc, char** argv) {
 
     SearchIndex engine;
