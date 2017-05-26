@@ -12,7 +12,7 @@ public:
     typedef T value_type;
     virtual ~FieldFilter() {}
 
-    virtual bool Rebuild(QueryDataType qdt, const std::vector<QueryDataValue>& data) = 0;
+    virtual bool Rebuild(QueryDataType qdt, const QueryDataValue& data) = 0;
     virtual bool filter(const value_type& value) = 0;
 };
 
@@ -20,14 +20,13 @@ template<class T>
 class RangeFilter : public FieldFilter<T> {
 public:
     typedef T value_type;
-    virtual bool Rebuild(QueryDataType qdt, const std::vector<QueryDataValue>& data) {
-        if (data.size() < 2) {
+    virtual bool Rebuild(QueryDataType qdt, const QueryDataValue& data) {
+        std::vector<value_type> vec;
+        if (!GetQueryDataValue<value_type>(data, vec) || vec.size() < 2)
             return false;
-        }
 
-        GetQueryDataValue<value_type>(qdt, data[0], begin_);
-        GetQueryDataValue<value_type>(qdt, data[1], end_);
-
+        begin_ = vec[0];
+        end_ = vec[1];
         return true;
     }
 
@@ -44,12 +43,12 @@ template<class T>
 class NormalFilter : public FieldFilter<T> {
 public:
     typedef T value_type;
-    virtual bool Rebuild(QueryDataType qdt, const std::vector<QueryDataValue>& data) {
-        if (data.size() < 1) {
+    virtual bool Rebuild(QueryDataType qdt, const QueryDataValue& data) {
+        std::vector<value_type> vec;
+        if (!GetQueryDataValue<value_type>(data, vec) || vec.empty() )
             return false;
-        }
 
-        GetQueryDataValue<value_type>(qdt, data[0], value_);
+        value_ = vec[0];
         return true;
     }
 
@@ -63,15 +62,13 @@ template<class T>
 class SetFilter : public FieldFilter<T> {
 public:
     typedef T value_type;
-    virtual bool Rebuild(QueryDataType qdt, const std::vector<QueryDataValue>& data) {
-        if (data.empty()) {
+    virtual bool Rebuild(QueryDataType qdt, const QueryDataValue& data) {
+        std::vector<value_type> vec;
+        if (!GetQueryDataValue<value_type>(data, vec) || vec.empty() )
             return false;
-        }
 
-        value_type temp;
-        for (auto& data_val : data) {
-            GetQueryDataValue<value_type>(qdt, data_val, temp);
-            set_value_.insert(temp);
+        for (auto& val : vec) {
+            set_value_.insert(val);
         }
 
         return true;

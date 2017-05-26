@@ -21,11 +21,15 @@ public:
 
     // inverted_index 支持的查询类型有 EQUAL, NOT_EQUAL, IN, NOT_IN
     bool Support(QueryType qt, const QueryData& data) {
-        if (data.type != SupportQueryDataType<T>::value || 
-            data.values.empty() ||
-            (qt != QT_EQUAL && qt != QT_NOT_EQUAL && qt != QT_IN && qt != QT_NOT_IN)) {
+        if (data.type != SupportQueryDataType<T>::value) 
             return false;
-        }
+
+        if (qt != QT_EQUAL && qt != QT_NOT_EQUAL && qt != QT_IN && qt != QT_NOT_IN)
+            return false;
+
+        std::vector<value_type> vec;
+        if (!GetQueryDataValue<value_type>(data.value, vec) || vec.empty())
+            return false;
 
         return true;
     }
@@ -33,19 +37,15 @@ public:
     bool Trigger(QueryType qt, const QueryData& data, boost::dynamic_bitset<>& bitset) {
         if (!Support(qt, data)) return false;
 
-        std::vector<value_type> query_values;
-        value_type value;
-        if (qt == QT_EQUAL || qt == QT_NOT_EQUAL) {
-            GetQueryDataValue<value_type>(data.type, data.values[0], value);
-            query_values.push_back(value);
-        } else if (qt == QT_IN || qt == QT_NOT_IN) {
-            for (int i = 0; i < data.values.size(); ++i) {
-                GetQueryDataValue<value_type>(data.type, data.values[i], value);
-                query_values.push_back(value);
-            }
-        }
+        std::vector<value_type> vec;
+        if (!GetQueryDataValue<value_type>(data.value, vec) || vec.empty())
+            return false;
 
-        for (const value_type& val : query_values) {
+        if (qt == QT_EQUAL || qt == QT_NOT_EQUAL) {
+            vec.resize(1);
+        }
+            
+        for (const value_type& val : vec) {
             auto it = index_.find(val);
             if (it != index_.end()) {
                 for(int pos : it->second) {

@@ -91,7 +91,7 @@ public:
         if (NULL != index_ && index_->Support(qt,data)) 
             return 2;
 
-        if (NULL != filters_[qt] && filters_[qt]->Rebuild(data.type, data.values))
+        if (NULL != filters_[qt] && filters_[qt]->Rebuild(data.type, data.value))
             return 1;
 
         return 0;
@@ -102,7 +102,7 @@ public:
             return index_->Trigger(qt, data, bitset);
 
         FieldFilter<index_value_type>* p_filter = filters_[qt];
-        if (p_filter == NULL || !p_filter->Rebuild(data.type, data.values))
+        if (p_filter == NULL || !p_filter->Rebuild(data.type, data.value))
             return false;
 
         for (int i = 0; i < values_.size(); ++i) {

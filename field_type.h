@@ -11,7 +11,7 @@
 // 支持普通的类型有: int32_t, uint32_t, int64_t, uint64_t, float, double, bool
 typedef struct feature_t {
     uint64_t    name;
-    double      score;
+    double      value;
 } feature_t;
 // END 定义一些特殊的字段类型
 

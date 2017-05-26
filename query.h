@@ -1,8 +1,11 @@
 #ifndef QUERY_H_
 #define QUERY_H_
 
+#include <string.h>
+
 #include <string>
 #include <vector>
+#include <type_traits>
 
 typedef struct c_str_t {
     char *data;
@@ -24,20 +27,14 @@ enum QueryDataType {
     QDT_MAX
 }; 
 
-union QueryDataValue {
-    int32_t      int32_value;
-    uint32_t     uint32_value;
-    int64_t      int64_value;
-    uint64_t     uint64_value;
-    float        float_value;
-    double       double_value;
-    bool         bool_value;
-    c_str_t      string_value;
-};
+typedef struct QueryDataValue {
+    int   size;
+    char* data;
+} QueryDataValue;
 
 struct QueryData {
-    QueryDataType                 type;
-    std::vector<QueryDataValue> values;
+    QueryDataType       type;
+    QueryDataValue      value;
 };
 
 enum QueryType { 
@@ -64,33 +61,31 @@ struct Query
     std::vector<QueryItem> must_not;
 };
 
+typedef uint32_t query_str_size_type;
 template<typename T>
-bool GetQueryDataValue(QueryDataType qdt, QueryDataValue qd_value, T& value) {
-    switch (qdt) {
-        case QDT_INT32:
-            value = qd_value.int32_value;
-            return true;
-        case QDT_UINT32:
-            value = qd_value.uint32_value;
-            return true;
-        case QDT_INT64:
-            value = qd_value.int64_value;
-            return true;
-        case QDT_UINT64:
-            value = qd_value.uint64_value;
-            return true;
-        case QDT_FLOAT:
-            value = qd_value.float_value;
-            return true;
-        case QDT_DOUBLE:
-            value = qd_value.double_value;
-            return true;
-        case QDT_BOOL:
-            value = qd_value.bool_value;
-            return true;
-        default:
+bool GetQueryDataValue(const QueryDataValue& qd_value, std::vector<T>& value) {
+    int size = qd_value.size;
+    char *p = qd_value.data;
+
+    while (size > 0) {
+        if (size >= sizeof(T)) {
+            value.push_back(*(T*)p);
+            size -= sizeof(T);
+            p += sizeof(T);
+        } else {
             return false;
+        }
     }
+    return true;
+}
+
+template<class T>
+QueryDataValue MakeQueryDataValue(std::vector<T>& vec) {
+    QueryDataValue value;
+    value.size = vec.size() * sizeof(T);
+    value.data = new char[value.size];
+    memcpy(value.data, &vec[0], value.size);
+    return value;
 }
 
 #endif // QUERY_H_

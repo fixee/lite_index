@@ -16,91 +16,60 @@
 using namespace std;
 
 int main(int argc, char** argv) {
-    //// test field
-    //CommField<int32_t> field;
-    //field.set_size(1024);
-    //field.Init(true);
-
-    //for (int i = 0; i < 1024; ++i) {
-    //    field.set_value(i, i);
-    //}
-
-    //QueryData query_data;
-    //query_data.type = QDT_INT32;
-
-    //QueryDataValue start;
-    //start.int32_value = 1;
-    //query_data.values.push_back(start);
-
-    //QueryDataValue end;
-    //end.int32_value = 12;
-    //query_data.values.push_back(end);
-
-    //QueryType query_type = QT_IN;
-
-    //bool support = field.Support(query_type, query_data);
-    //cout << "support:" << support << endl;
-
-    //boost::dynamic_bitset<> bitset(1024);
-    //field.trigger(query_type, query_data, bitset);
-    //cout << "count:" << bitset.count() << endl;
-    //cout << "size:" << bitset.size() << endl;
-
-    //for (size_t index = bitset.find_first(); 
-    //     index != boost::dynamic_bitset<>::npos; 
-    //     index = bitset.find_next(index)) {
-    //    cout << index << endl;
-    //}
-    
-    // test proto_buffer
-    //using namespace index_system::pb;
-
-    // read data
-    std::ifstream ifs("data/786113550_27", std::ios::in | std::ios::binary);
-    std::string data;
-    data.assign((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    std::cout << data.size() << std::endl;
-
-    index_system::pb::Documents docs;
-    bool ret = docs.ParseFromString(data);
-    std::cout << "parse ret:" << ret << std::endl;
-    std::cout << "document size:" << docs.documents_size() << std::endl;
-
-    ////typedef typename GetterFactory<int64_t>::GetterFunc int64_getter;
-    //typedef GetterFactory<int64_t>::GetterFunc int64_getter;
-    //typedef GetterFactory<std::string>::GetterFunc string_getter;
-
-    //int64_getter publish_time_getter;
-    //if (!GetterFactory<int64_t>::Instance().get("get_publish_time", publish_time_getter)) {
-    //    std::cout << "field getter error: get_publish_time" << std::endl;
-    //    return 1;
-    //}
-
-    //string_getter doc_id_getter;
-    //if (!GetterFactory<std::string>::Instance().get("get_doc_id", doc_id_getter)) {
-    //    std::cout << "field getter error: get_doc_id" << std::endl;
-    //    return 1;
-    //}
-
-    //for (int i = 0; i < docs.documents_size(); ++i) {
-    //    const index_system::pb::Document& doc = docs.documents(i);
-    //    std::cout << "doc_id:" << doc_id_getter(doc) << "    ";
-    //    std::cout << "publish_time:" << publish_time_getter(doc) << std::endl;
-    //}
 
     SearchIndex engine;
-    ret = engine.Init();
+    std::string err_msg;
+    bool ret = engine.Init(&err_msg);
     if (!ret) {
-        std::cout << "init search index error" << endl;
+        std::cout << "search_index inti error, err_msg:";
+        std::cout << err_msg << endl;
         return 1;
     }
 
-    engine.Reset(docs.documents_size());
-    for (int i = 0; i < docs.documents_size(); ++i) {
-        engine.InsertDocument(docs.documents(i));
+    // 大括号限制生命周期， 及时释放内存
+    {
+        std::ifstream ifs("data/786113550_27", std::ios::in | std::ios::binary);
+        std::string data;
+        data.assign((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+        std::cout << data.size() << std::endl;
+
+        index_system::pb::Documents docs;
+        ret = docs.ParseFromString(data);
+        std::cout << "parse ret:" << ret << std::endl;
+        std::cout << "document size:" << docs.documents_size() << std::endl;
+
+        engine.Reset(docs.documents_size());
+        for (int i = 0; i < docs.documents_size(); ++i) {
+            engine.InsertDocument(docs.documents(i));
+        }
+    }
+    std::cout << "search_index load succ!" << std::endl;
+
+    //c_str_t str_value;
+    //str_value.data = const_cast<char*>("14");
+    //str_value.size = 2;
+    //QueryDataValue pid;
+    //pid.string_value = str_value;
+
+    std::vector<std::string> pid_list = { "14" };
+
+    QueryItem item;
+    item.name = "product_id";
+    item.type = QT_EQUAL;
+    item.data.type = QDT_STRING;
+    item.data.value = MakeQueryDataValue<std::string>(pid_list);
+
+    Query query;
+    query.should.push_back(item);
+
+    std::vector<int> result;
+    ret = engine.Trigger(query, result);
+    if (!ret) {
+        std::cout << "trigger not supported!" << std::endl;
+        return 1;
     }
 
-    sleep(100);
+    std::cout << "trigger succ, result_size:" << result.size() << std::endl;
 
     return 0;
 }

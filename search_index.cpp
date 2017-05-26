@@ -18,7 +18,7 @@ bool SearchIndex::InitField(int slot, const field_config_t& conf) {
         return false;
 
     typename GetterFactory<T>::GetterFunc func;
-    if(!GetterFactory<T>::Instance().get(conf.convert_func, func))
+    if(!GetterFactory<T>::Instance().get(conf.name, func))
         return false;
 
     FieldInterface* p = new CommField<T>(func);
@@ -37,7 +37,7 @@ bool SearchIndex::InitArrField(int slot, const field_config_t& conf) {
         return false;
 
     typename GetterFactory<std::vector<T>>::GetterFunc func;
-    if(!GetterFactory<std::vector<T>>::Instance().get(conf.convert_func, func))
+    if(!GetterFactory<std::vector<T>>::Instance().get(conf.name, func))
         return false;
 
     FieldInterface* p = new ArrayField<T>(func);
@@ -50,55 +50,76 @@ bool SearchIndex::InitArrField(int slot, const field_config_t& conf) {
     }
 }
 
-bool SearchIndex::Init() {
+bool SearchIndex::Init(std::string *err_msg) {
     for (int i = 0; i < INDEX_FIELD_SIZE; ++i) {
         const field_config_t& conf = INDEX_FIELDS[i];
         switch (conf.type) {
         case INT32:
-            if (!InitField<int32_t>(i, conf)) return false;
+            if (!InitField<int32_t>(i, conf)) goto init_error;
+            break;
+        case UINT32:
+            if (!InitField<uint32_t>(i, conf)) goto init_error;
             break;
         case INT64:
-            if (!InitField<int64_t>(i, conf)) return false;
+            if (!InitField<int64_t>(i, conf)) goto init_error;
+            break;
+        case UINT64:
+            if (!InitField<uint64_t>(i, conf)) goto init_error;
             break;
         case FLOAT :
-            if (!InitField<float>(i, conf)) return false;
+            if (!InitField<float>(i, conf)) goto init_error;
             break;
         case DOUBLE :
-            if (!InitField<double>(i, conf)) return false;
+            if (!InitField<double>(i, conf)) goto init_error;
             break;
         case BOOL :
-            if (!InitField<bool>(i, conf)) return false;
+            if (!InitField<bool>(i, conf)) goto init_error;
             break;
         case STRING :
-            if (!InitField<std::string>(i, conf)) return false;
+            if (!InitField<std::string>(i, conf)) goto init_error;
             break;
         case FEATURE :
-            if (!InitField<feature_t>(i, conf)) return false;
+            if (!InitField<feature_t>(i, conf)) goto init_error;
             break;
         case ARR_INT32:
-            if (!InitArrField<int32_t>(i, conf)) return false;
+            if (!InitArrField<int32_t>(i, conf)) goto init_error;
+            break;
+        case ARR_UINT32:
+            if (!InitArrField<uint32_t>(i, conf)) goto init_error;
             break;
         case ARR_INT64:
-            if (!InitArrField<int64_t>(i, conf)) return false;
+            if (!InitArrField<int64_t>(i, conf)) goto init_error;
+            break;
+        case ARR_UINT64:
+            if (!InitArrField<uint64_t>(i, conf)) goto init_error;
             break;
         case ARR_FLOAT :
-            if (!InitArrField<float>(i, conf)) return false;
+            if (!InitArrField<float>(i, conf)) goto init_error;
             break;
         case ARR_DOUBLE :
-            if (!InitArrField<double>(i, conf)) return false;
+            if (!InitArrField<double>(i, conf)) goto init_error;
             break;
         case ARR_BOOL :
-            if (!InitArrField<bool>(i, conf)) return false;
+            if (!InitArrField<bool>(i, conf)) goto init_error;
             break;
         case ARR_STRING :
-            if (!InitArrField<std::string>(i, conf)) return false;
+            if (!InitArrField<std::string>(i, conf)) goto init_error;
             break;
         case ARR_FEATURE :
-            if (!InitArrField<feature_t>(i, conf)) return false;
+            if (!InitArrField<feature_t>(i, conf)) goto init_error;
             break;
         default:
-            return false;
+            goto init_error;
         }
+
+        // 避免进入到 init_error label
+        continue;
+
+init_error:
+        if (NULL != err_msg) {
+            *err_msg = std::string("init field error, field_name:").append(conf.name);
+        }
+        return false;
     }
 
     return true;
@@ -159,7 +180,7 @@ bool SearchIndex::Trigger(const Query& query, std::vector<int>& result) {
     boost::dynamic_bitset<> must_not_set(doc_size_);
 
     for (const auto& item: query.should) {
-        working_set.clear();
+        working_set.reset();
         if (!TriggerItem(item, working_set)) 
             return false;
         should_set |= working_set;
@@ -167,14 +188,14 @@ bool SearchIndex::Trigger(const Query& query, std::vector<int>& result) {
 
     must_set.set();
     for (const auto& item: query.must) {
-        working_set.clear();
+        working_set.reset();
         if (!TriggerItem(item, working_set)) 
             return false;
         must_set &= working_set;
     }
 
     for (const auto& item: query.must_not) {
-        working_set.clear();
+        working_set.reset();
         if (!TriggerItem(item, working_set)) 
             return false;
         must_not_set |= working_set;
@@ -190,7 +211,7 @@ bool SearchIndex::Trigger(const Query& query, std::vector<int>& result) {
         result.push_back(index);
     }
 
-    return false;
+    return true;
 }
 
 bool SearchIndex::TriggerItem(const QueryItem& item, boost::dynamic_bitset<>& bitset) {

@@ -1,6 +1,8 @@
 #ifndef SEARCH_INDEX_H_
 #define SEARCH_INDEX_H_
 
+#include <string>
+
 #include "query.h"
 #include "field_type.h"
 #include "field_config.h"
@@ -10,7 +12,7 @@ public:
     SearchIndex();
     ~SearchIndex();
 
-    bool Init();
+    bool Init(std::string *err_msg = NULL);
     void Reset(size_t doc_size);
 
     void InsertDocument(const index_system::pb::Document& doc);
